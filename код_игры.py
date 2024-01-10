@@ -5,8 +5,8 @@ pygame.init()
 # Создание игрового окна
 fps = 3
 width, height = 1000, 600
-start = [40, 500]
-end = [100, 500]
+start = [150, 472]
+end = [230, 472]
 thickness = 5
 game_window = pygame.display.set_mode((width, height))
 
@@ -36,20 +36,46 @@ class missile(pygame.sprite.Sprite):
         super().__init__(group)
         self.image = missile.image
         self.rect = self.image.get_rect()
-        self.rect.x = 100
-        self.rect.y = end[1] -15
+        self.rect.x, self.rect.y = start
+        self.rect.y -= 15
 
     def update(self, *args):
-        self.rect.x += 60
-        self.rect.y += end[1] - 500
+        self.rect.x += 80
+        self.rect.y += end[1] - 472
+
+
+class guns(pygame.sprite.Sprite):
+    image = load_image("gun.png")
+    image = pygame.transform.smoothscale(image, (150, 150))
+
+    def __init__(self, group):
+        # НЕОБХОДИМО вызвать конструктор родительского класса Sprite.
+        # Это очень важно !!!
+        super().__init__(group)
+        self.image = guns.image
+        self.rect = self.image.get_rect()
+        self.rect.x = 0
+        self.rect.y = 450
 
 
 
 
 pygame.display.set_caption("Игра")
-gun = pygame.image.load('data/gun.png')
 all_sprites = pygame.sprite.Group()
-group_missile = pygame.sprite.Group()
+gun = guns(all_sprites)
+group_safety = pygame.sprite.Group()
+group_gunshot = pygame.sprite.Group()
+group_gun = pygame.sprite.Group()
+group_gun.add(gun)
+safety_x = 160
+safety_y = 550
+for i in range(5):
+    spr = missile(all_sprites)
+    spr.rect.y = safety_y
+    spr.rect.x = safety_x
+    group_safety.add(spr)
+    safety_x += 32
+
 clock = pygame.time.Clock()
 
 
@@ -69,13 +95,20 @@ while running:
         elif event.type == pygame.KEYDOWN:
 
             if event.key == pygame.K_DOWN:
-                end[1] += 5
+                if len(group_gunshot) == 0:
+                    end[1] += 5
 
             if event.key == pygame.K_UP:
-                end[1] -= 5
+                if len(group_gunshot) == 0:
+                    end[1] -= 5
 
             if event.key == pygame.K_SPACE:
-                group_missile.add(missile(all_sprites))
+                group_gunshot.add(missile(group_gunshot))
+
+    for spr in group_gunshot:
+        if spr.rect.x > 1000 or spr.rect.x < 0 or spr.rect.y > 600 or spr.rect.y < 0:
+            group_gunshot.remove(spr)
+
 
 
 
@@ -84,8 +117,11 @@ while running:
     # Очистка окна
     game_window.fill((255, 255, 255))
     pygame.draw.line(game_window, (255, 0, 0), start, end, thickness)
-    all_sprites.draw(game_window)
-    all_sprites.update(game_window)
+    group_safety.draw(game_window)
+    group_gun.draw(game_window)
+    group_gunshot.draw(game_window)
+    group_gunshot.update(game_window)
+
 
 
     # Обновление окна
