@@ -1,5 +1,6 @@
 import pygame
 import os
+from random import randint
 
 pygame.init()
 # Создание игрового окна
@@ -58,6 +59,21 @@ class guns(pygame.sprite.Sprite):
         self.rect.y = 450
 
 
+class target(pygame.sprite.Sprite):
+    image = load_image("мишень.png")
+    image = pygame.transform.smoothscale(image, (70, 70))
+
+    def __init__(self, group):
+        # НЕОБХОДИМО вызвать конструктор родительского класса Sprite.
+        # Это очень важно !!!
+        super().__init__(group)
+        self.image = target.image
+        self.rect = self.image.get_rect()
+        self.rect.x = randint(600, 930)
+        self.rect.y = randint(0, 530)
+
+
+
 
 
 pygame.display.set_caption("Игра")
@@ -66,6 +82,7 @@ gun = guns(all_sprites)
 group_safety = pygame.sprite.Group()
 group_gunshot = pygame.sprite.Group()
 group_gun = pygame.sprite.Group()
+group_target = pygame.sprite.Group()
 group_gun.add(gun)
 safety_x = 160
 safety_y = 550
@@ -75,6 +92,12 @@ for i in range(5):
     spr.rect.x = safety_x
     group_safety.add(spr)
     safety_x += 32
+
+while len(group_target) < 15:
+    target_count = target(all_sprites)
+    if len(pygame.sprite.spritecollide(target_count, group_target, False)) == 0:
+        group_target.add(target_count)
+
 
 clock = pygame.time.Clock()
 
@@ -121,6 +144,7 @@ while running:
     group_gun.draw(game_window)
     group_gunshot.draw(game_window)
     group_gunshot.update(game_window)
+    group_target.draw(game_window)
 
 
 
