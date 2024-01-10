@@ -36,6 +36,7 @@ class missile(pygame.sprite.Sprite):
         # Это очень важно !!!
         super().__init__(group)
         self.image = missile.image
+        self.mask = pygame.mask.from_surface(self.image)
         self.rect = self.image.get_rect()
         self.rect.x, self.rect.y = start
         self.rect.y -= 15
@@ -68,9 +69,11 @@ class target(pygame.sprite.Sprite):
         # Это очень важно !!!
         super().__init__(group)
         self.image = target.image
+        self.mask = pygame.mask.from_surface(self.image)
         self.rect = self.image.get_rect()
         self.rect.x = randint(600, 930)
         self.rect.y = randint(0, 530)
+
 
 
 
@@ -127,10 +130,20 @@ while running:
 
             if event.key == pygame.K_SPACE:
                 group_gunshot.add(missile(group_gunshot))
+                for s in group_safety:
+                    group_safety.remove(s)
+                    break
 
     for spr in group_gunshot:
         if spr.rect.x > 1000 or spr.rect.x < 0 or spr.rect.y > 600 or spr.rect.y < 0:
             group_gunshot.remove(spr)
+
+    for spr1 in group_target:
+        for spr2 in group_gunshot:
+            if pygame.sprite.collide_mask(spr1, spr2):
+                group_gunshot.remove(spr2)
+                group_target.remove(spr1)
+
 
 
 
@@ -145,6 +158,7 @@ while running:
     group_gunshot.draw(game_window)
     group_gunshot.update(game_window)
     group_target.draw(game_window)
+    group_target.update(game_window)
 
 
 
