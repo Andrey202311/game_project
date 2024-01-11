@@ -13,6 +13,7 @@ thickness = 5
 game_window = pygame.display.set_mode((width, height))
 start_window = pygame.display.set_mode((500, 300))
 level_window = pygame.display.set_mode((600, 200))
+count = 0  # количество мишеней
 
 
 def load_image(name, color_key=None):  # Функция для загрузки изображения
@@ -69,6 +70,7 @@ def start_screen():
 
 
 def level_screen():
+    global count
     pygame.display.set_mode((600, 200))
     intro_text = ["Выберите уровень, нажав одну из клавиш:",
                   "'1', '2' и '3'.",
@@ -91,9 +93,16 @@ def level_screen():
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 terminate()
-            elif event.type == pygame.KEYDOWN or \
-                    event.type == pygame.MOUSEBUTTONDOWN:
-                return  # начинаем игру
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_1:
+                    count = 5
+                    return
+                if event.key == pygame.K_2:
+                    count = 10
+                    return
+                if event.key == pygame.K_3:
+                    count = 15
+                    return
         pygame.display.flip()
 
 
@@ -154,14 +163,14 @@ def game_screen():
     group_gun.add(gun)
     safety_x = 160
     safety_y = 550
-    for i in range(5):
+    for i in range(count):
         spr = missile(all_sprites)
         spr.rect.y = safety_y
         spr.rect.x = safety_x
         group_safety.add(spr)
         safety_x += 32
 
-    while len(group_target) < 5:
+    while len(group_target) < count:
         target_count = target(all_sprites)
         if len(pygame.sprite.spritecollide(target_count, group_target, False)) == 0:
             group_target.add(target_count)
@@ -179,9 +188,7 @@ def game_screen():
             if event.type == pygame.QUIT:
                 running = False
 
-
             elif event.type == pygame.KEYDOWN:
-
                 if event.key == pygame.K_DOWN:
                     if len(group_gunshot) == 0:
                         end[1] += 5
@@ -214,7 +221,7 @@ def game_screen():
             running = False
 
         # Очистка окна
-        game_window.fill((255, 255, 255))
+        game_window.fill((255, 235, 205))
         pygame.draw.line(game_window, (255, 0, 0), start, end, thickness)
         group_safety.draw(game_window)
         group_gun.draw(game_window)
