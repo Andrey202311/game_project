@@ -96,7 +96,7 @@ for i in range(5):
     group_safety.add(spr)
     safety_x += 32
 
-while len(group_target) < 15:
+while len(group_target) < 5:
     target_count = target(all_sprites)
     if len(pygame.sprite.spritecollide(target_count, group_target, False)) == 0:
         group_target.add(target_count)
@@ -118,6 +118,8 @@ while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
+
+
         elif event.type == pygame.KEYDOWN:
 
             if event.key == pygame.K_DOWN:
@@ -143,6 +145,13 @@ while running:
             if pygame.sprite.collide_mask(spr1, spr2):
                 group_gunshot.remove(spr2)
                 group_target.remove(spr1)
+    if len(group_target) != 0 and len(group_safety) == 0 and len(group_gunshot) == 0:
+        if len(group_safety) == 0:
+            print('Lose')
+            running = False
+    if len(group_target) == 0:
+        print('Win')
+        running = False
 
 
 
