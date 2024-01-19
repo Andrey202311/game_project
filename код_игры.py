@@ -4,16 +4,29 @@ from random import randint
 import sys
 
 pygame.init()
-# Создание игрового окна
-fps = 3
+fps = 5
 width, height = 1000, 600
 start = [150, 472]
 end = [230, 472]
 thickness = 5
 game_window = pygame.display.set_mode((width, height))
-start_window = pygame.display.set_mode((500, 300))
+start_window = pygame.display.set_mode((500, 400))
 level_window = pygame.display.set_mode((600, 200))
+end_window = pygame.display.set_mode((400, 300))
 count = 0  # количество мишеней
+count1 = 0  # количество сбитых мишений
+
+
+def write_file(file, x):
+    with open(file, 'a') as file:
+        file.write(str(x) + ' ')
+
+
+def read_file(file):
+    with open(file, 'r') as file:
+        array = file.read().strip().split()
+        array = list(map(int, array))
+    return max(array)
 
 
 def load_image(name, color_key=None):  # Функция для загрузки изображения
@@ -37,16 +50,18 @@ def terminate():
 
 
 def start_screen():
-    pygame.display.set_mode((500, 300))
+    pygame.display.set_mode((500, 400))
     intro_text = ["Добро пожаловать в игру 'Точный выстрел'",
-                  "Прицелся из пушки, нажимая",
+                  "Прицелься из пушки, нажимая",
                   "клавиши-стрелочки вверх или вниз",
-                  "на клавиатуре, и порази все мишени.",
+                  "на клавиатуре. Затем нажми на",
+                  "пробел, чтобы произвести выстрел.",
+                  "Порази как можно больше мишений.",
                   "",
                   "Нажми любую кнопку для выбора",
                   "уровня."]
 
-    fon = pygame.transform.scale(load_image('фон.jpg'), (500, 300))
+    fon = pygame.transform.scale(load_image('фон.jpg'), (500, 400))
     start_window.blit(fon, (0, 0))
     font = pygame.font.Font(None, 30)
     text_coord = 50
@@ -74,7 +89,8 @@ def level_screen():
     pygame.display.set_mode((600, 200))
     intro_text = ["Выберите уровень, нажав одну из клавиш:",
                   "'1', '2' и '3'.",
-                  "Чем больше сложность уровня тем выше его сложность"]
+                  "Чем больще числовой индекс уровня,",
+                  "тем больше его сложность."]
 
     fon = pygame.transform.scale(load_image('фон.jpg'), (600, 200))
     level_window.blit(fon, (0, 0))
@@ -96,25 +112,28 @@ def level_screen():
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_1:
                     count = 5
+                    game_screen()
                     return
                 if event.key == pygame.K_2:
                     count = 10
+                    game_screen()
                     return
                 if event.key == pygame.K_3:
                     count = 15
+                    game_screen()
                     return
         pygame.display.flip()
 
 
 def game_screen():
+    global count1
     pygame.display.set_mode((width, height))
+
     class missile(pygame.sprite.Sprite):
         image = load_image("missile.png")
         image = pygame.transform.smoothscale(image, (30, 30))
 
         def __init__(self, group):
-            # НЕОБХОДИМО вызвать конструктор родительского класса Sprite.
-            # Это очень важно !!!
             super().__init__(group)
             self.image = missile.image
             self.mask = pygame.mask.from_surface(self.image)
@@ -131,8 +150,6 @@ def game_screen():
         image = pygame.transform.smoothscale(image, (150, 150))
 
         def __init__(self, group):
-            # НЕОБХОДИМО вызвать конструктор родительского класса Sprite.
-            # Это очень важно !!!
             super().__init__(group)
             self.image = guns.image
             self.rect = self.image.get_rect()
@@ -144,8 +161,6 @@ def game_screen():
         image = pygame.transform.smoothscale(image, (70, 70))
 
         def __init__(self, group):
-            # НЕОБХОДИМО вызвать конструктор родительского класса Sprite.
-            # Это очень важно !!!
             super().__init__(group)
             self.image = target.image
             self.mask = pygame.mask.from_surface(self.image)
@@ -177,13 +192,11 @@ def game_screen():
 
     clock = pygame.time.Clock()
 
-    # Основной цикл игры
     running = True
     while running:
 
         clock.tick(fps)
 
-        # Обработка событий
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
@@ -198,7 +211,8 @@ def game_screen():
                         end[1] -= 5
 
                 if event.key == pygame.K_SPACE:
-                    group_gunshot.add(missile(group_gunshot))
+                    if len(group_safety) != 0:
+                        group_gunshot.add(missile(group_gunshot))
                     for s in group_safety:
                         group_safety.remove(s)
                         break
@@ -212,15 +226,18 @@ def game_screen():
                 if pygame.sprite.collide_mask(spr1, spr2):
                     group_gunshot.remove(spr2)
                     group_target.remove(spr1)
-        if len(group_target) != 0 and len(group_safety) == 0 and len(group_gunshot) == 0:
-            if len(group_safety) == 0:
-                print('Lose')
-                running = False
-        if len(group_target) == 0:
-            print('Win')
+        if len(group_target) == 0 or (len(group_safety) == 0 and len(group_gunshot) == 0):
+            count1 = count - len(group_target)
+            if count == 5:
+                write_file('data/статистика/уровень 1', count1)
+            if count == 10:
+                write_file('data/статистика/уровень 2', count1)
+
+            if count == 15:
+                write_file('data/статистика/уровень 3', count1)
+            end_screen()
             running = False
 
-        # Очистка окна
         game_window.fill((255, 235, 205))
         pygame.draw.line(game_window, (255, 0, 0), start, end, thickness)
         group_safety.draw(game_window)
@@ -230,17 +247,51 @@ def game_screen():
         group_target.draw(game_window)
         group_target.update(game_window)
 
-        # Обновление окна
         pygame.display.update()
+
+
+def end_screen():
+    global count
+    pygame.display.set_mode((400, 300))
+    if count == 5:
+        mx = read_file('data/статистика/уровень 1')
+    if count == 10:
+        mx = read_file('data/статистика/уровень 2')
+    if count == 15:
+        mx = read_file('data/статистика/уровень 3')
+
+    intro_text = [f"Результат {count1}/{count}",
+                  f"Лучший результат {mx}/{count}",
+                  "",
+                  "Нажмите пробел, чтобы вернуться",
+                  "к выбору уровня. Закройте окно,",
+                  "если хотите завершить игру."]
+
+    fon = pygame.transform.scale(load_image('фон.jpg'), (400, 300))
+    end_window.blit(fon, (0, 0))
+    font = pygame.font.Font(None, 30)
+    text_coord = 50
+    for line in intro_text:
+        string_rendered = font.render(line, 1, pygame.Color('black'))
+        intro_rect = string_rendered.get_rect()
+        text_coord += 10
+        intro_rect.top = text_coord
+        intro_rect.x = 10
+        text_coord += intro_rect.height
+        end_window.blit(string_rendered, intro_rect)
+
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                terminate()
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_SPACE:
+                    level_screen()
+                    return
+        pygame.display.flip()
 
 
 start_screen()
 level_screen()
-game_screen()
-
-
-
-
-
-# Завершение работы Pygame
 pygame.quit()
+
